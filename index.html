@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>
+		UMG - Proyecto Compiladores
+	</title>
+	<!-- Bootstrap -->
+	<link href="css/bootstrap.min.css" rel="stylesheet"/>
+	<!-- Angular -->
+	<script src="js/angular.min.js">
+	</script>
+	<script src="js/angular-sanitize.js">
+	</script>
+	<script src="js/app.js">	
+	</script>
+	<script src="js/language-service.js">
+	</script>
+	<script src="js/angular.ui.js">
+	</script>	
+	<!-- Code Mirror -->
+	<link href="lib/codemirror.css" rel="stylesheet">        
+	</link>	
+	<script src="lib/codemirror.js">
+	</script>
+</head>
+<body ng-app="compiladores">
+	<main class="container-fluid" ng-controller="EditorController as controlador" role="main">
+		<h1>Compiladores</h1>
+		<div class="row my-2" style="margin:5px;">
+			<div class="col">
+				<button class="btn btn-primary my-2 my-sm-0" id="exampleFormControlFile1" ng-file-select="onFileSelect($files)" onclick="document.getElementById('selectedFile').click();">
+					<i class="fas fa-file">
+					</i>
+				</button>
+				<button class="btn btn-primary my-2 my-sm-0">
+					<i class="fas fa-save">
+					</i>
+				</button>
+				<button class="btn btn-primary my-2" ng-click="controlador.CambioEnEditor();">
+					Léxico
+				</button>			
+			</div>
+		</div>
+		<div class="container-fluid">
+			<div class="row row-cols-2">
+				<div class="col">
+					<h5>
+						Editor
+					</h5>
+					<div class="form-group">
+						<textarea class="form-control" id="editor" name="editor" ng-model="controlador.codigo" rows="15" ui-codemirror>
+						</textarea>
+					</div>
+				</div>
+				<div class="col">
+					<h5>
+						Léxico
+					</h5>
+					<div class="row" style="max-height: 320px !important; overflow: auto;">
+						<div class="col">
+							<div class="card">
+								<div class="card-header">
+									Tokens
+								</div>
+								<div class="card-body"  style="max-height: 260px !important; overflow: auto;">
+									<ul class="list-group list-group-flush px-1 py-1">
+										<li class="list-group-item px-1 py-1" ng-repeat="linea in controlador.tokens track by $index">
+											<span ng-repeat="token in linea">{{ token }}<span ng-if="!$last">,</span>
+											</span>											
+										</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</br>
+</main>
+<!-- Dependencias de Bootstrap -->
+<script src="js/jquery-3.4.1.slim.min.js">
+</script>
+<script src="js/popper.min.js">
+</script>
+<script src="js/bootstrap.min.js">
+</script>
+<!-- FontAwesome -->
+<script data-auto-replace-svg="nest" src="js/all.js">
+</script>
+</body>
+</html>
