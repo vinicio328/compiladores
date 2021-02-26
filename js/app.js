@@ -38,6 +38,7 @@
                 // los tokens de la linea actual 
                 var tokensLineaActual = [];
                 var esSeparador = false;
+                var estoyLeyendoString = false;
                 var esToken = false;
                 var tokenActual = "";
 
@@ -46,10 +47,31 @@
                 {
                     var caracterActual = lineaActual[indiceCaracter];
 
+                    // identificar si estoy leyendo un string 
+                    if (lenguaje.literales.includes(caracterActual))
+                    {
+                        // verificar si encuentro el final 
+                        estoyLeyendoString = true;
+                    }
+
+                    // si estamos leyendo un string no importa el contenido 
+                    if (estoyLeyendoString)
+                    {
+                        tokenActual += caracterActual;
+                        continue;
+                    }
+
                     // no agregar espacios en blanco 
                     if (/\s/.test(caracterActual)) {
-                        continue;                        
-                        // TODO agregar logica extra
+                        if (tokenActual.length > 0)
+                        {
+                            tokensLineaActual.push(tokenActual);
+                            tokenActual = "";
+                        }  
+                        else 
+                        {
+                            continue;
+                        }
                     }
                     else {
                         // evaluar si hay separadores 
@@ -60,7 +82,7 @@
                                 tokensLineaActual.push(tokenActual);
                                 tokenActual = "";
                             }                            
-                        }
+                        }                        
                         else 
                         {
                             tokenActual += caracterActual;
