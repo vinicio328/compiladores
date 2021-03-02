@@ -66,7 +66,7 @@
 								<div class="card-body"  style="max-height: 260px !important; overflow: auto;">
 									<ul class="list-group list-group-flush px-1 py-1">
 										<li class="list-group-item px-1 py-1" ng-repeat="linea in controlador.tokens track by $index">
-											<span ng-repeat="token in linea">{{ token }}<span ng-if="!$last">,</span>
+											<span ng-repeat="token in linea track by $index">{{ token }}<span ng-if="!$last">,</span>
 											</span>											
 										</li>
 									</ul>

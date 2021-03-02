@@ -51,7 +51,18 @@
                     if (lenguaje.literales.includes(caracterActual))
                     {
                         // verificar si encuentro el final 
-                        estoyLeyendoString = true;
+                        if (estoyLeyendoString)
+                        {
+                            tokenActual += caracterActual;
+                            tokensLineaActual.push(tokenActual);
+                            tokenActual = "";
+                            estoyLeyendoString = false;
+                            continue;
+                        }
+                        else 
+                        {
+                            estoyLeyendoString = true;
+                        }                        
                     }
 
                     // si estamos leyendo un string no importa el contenido 
@@ -73,7 +84,28 @@
                             continue;
                         }
                     }
-                    else {
+                    else 
+                    {
+                        // verificar comentarios
+                        // solo comentarios simples 
+                        if (/\//.test(caracterActual))
+                        {
+                            // obtener el siguiente caracter
+                            var siguienteCaracter = lineaActual[indiceCaracter + 1];
+                            if (/\//.test(siguienteCaracter))
+                            {
+                                // dos barras significa comentario
+                                if (tokenActual.length > 0)
+                                {
+                                    tokensLineaActual.push(tokenActual);
+                                    tokenActual = "";
+                                }
+
+                                // no leer nada mas en la linea 
+                                break; 
+                            }
+                        }
+
                         // evaluar si hay separadores 
                         if (lenguaje.separador.includes(caracterActual))
                         {
