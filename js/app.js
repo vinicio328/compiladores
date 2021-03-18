@@ -18,7 +18,6 @@
         vm.CambioEnEditor = function CambioEnEditor() {
 
             vm.simbolos = [];
-            //var arrayDeLineas = vm.codigo.match(/[^\r\n]+/g);
             var arrayDeLineas = vm.codigo.split("\n");
             if (arrayDeLineas != null) {
                 vm.tokens = procesarLineas(arrayDeLineas, vm.simbolos);
@@ -37,10 +36,16 @@
 
                 // los tokens de la linea actual 
                 var tokensLineaActual = [];
-                var esSeparador = false;
-                var estoyLeyendoString = false;
-                var esToken = false;
                 var tokenActual = "";
+
+                // variables para controlar tokens 
+                var token = new Token();
+                var tokenPrevio = new Token();
+
+                // variables para controlar que venia antes del caracter
+                var estoyLeyendoString = false;
+                var vienedeOperador = false;
+
 
                 // ir caracter por caracter en la linea hasta encontrar un separador 
                 for (var indiceCaracter = 0; indiceCaracter < lineaActual.length; indiceCaracter++)
@@ -54,9 +59,23 @@
                         if (estoyLeyendoString)
                         {
                             tokenActual += caracterActual;
-                            tokensLineaActual.push(tokenActual);
+                            
+                            // construir el token 
+                            token.texto = tokenActual;
+                            token.esString = true;
+                            token.fila = indiceDeLinea;
+
+                            tokensLineaActual.push(token);
+
+                            // asignar token previo el token que acabo de terminar de leer
+                            tokenPrevio = token;
+
+                            // resetear varaibles
                             tokenActual = "";
                             estoyLeyendoString = false;
+                            token = new Token();
+                            vienedeOperador = false;
+
                             continue;
                         }
                         else 
@@ -76,8 +95,25 @@
                     if (/\s/.test(caracterActual)) {
                         if (tokenActual.length > 0)
                         {
-                            tokensLineaActual.push(tokenActual);
+                            token.texto = tokenActual;
+                            token.fila = indiceDeLinea;
+
+                            // evaluar el token para ver si es una asignacion
+                            if (lenguaje.asignador.includes(token.texto))
+                            {
+                                token.esAsignador = true;
+                            }
+
+                            tokensLineaActual.push(token);
+
+                            // asignar token previo el token que acabo de terminar de leer
+                            tokenPrevio = token;
+
+                            // resetear varaibles
                             tokenActual = "";
+                            estoyLeyendoString = false;
+                            token = new Token();
+                            vienedeOperador = false;                            
                         }  
                         else 
                         {
@@ -97,8 +133,25 @@
                                 // dos barras significa comentario
                                 if (tokenActual.length > 0)
                                 {
-                                    tokensLineaActual.push(tokenActual);
+                                    token.texto = tokenActual;
+                                    token.fila = indiceDeLinea;
+
+                                    // evaluar el token para ver si es una asignacion
+                                    if (lenguaje.asignador.includes(token.texto))
+                                    {
+                                        token.esAsignador = true;
+                                    }
+
+                                    tokensLineaActual.push(token);
+                                    
+                                    // asignar token previo el token que acabo de terminar de leer
+                                    tokenPrevio = token;
+
+                                    // resetear varaibles
                                     tokenActual = "";
+                                    estoyLeyendoString = false;
+                                    token = new Token();
+                                    vienedeOperador = false; 
                                 }
 
                                 // no leer nada mas en la linea 
@@ -109,15 +162,160 @@
                         // evaluar si hay separadores 
                         if (lenguaje.separador.includes(caracterActual))
                         {
-                            if (tokenActual.length > 0)
+                            // evaluar si es una clase 
+                            if (caracterActual == lenguaje.propiedad)
                             {
-                                tokensLineaActual.push(tokenActual);
+                                token.esClase = true;
+                            }    
+
+                            // evaluar si es un argumento
+                            if (caracterActual == lenguaje.argumento)
+                            {
+                                token.esArgumento = true;
+                            }
+
+                            if (!vienedeOperador && tokenActual.length > 0)
+                            {
+                                // Verificar numeros decimales como 33.5
+                                if (!isNaN(tokenActual) && caracterActual == lenguaje.propiedad) {
+                                    tokenActual += caracterActual;
+                                    token.esClase = false;
+                                    continue; // continuar ya que estoy avaluando un numero y puede que venga otro numero despues del punto
+                                }
+
+                                token.texto = tokenActual;
+                                token.fila = indiceDeLinea;
+
+                                tokensLineaActual.push(token);
+                                
+                                // asignar token previo el token que acabo de terminar de leer
+                                tokenPrevio = token;
+
+                                // resetear varaibles
                                 tokenActual = "";
-                            }                            
+                                estoyLeyendoString = false;
+                                token = new Token();
+                                vienedeOperador = false; 
+                            }
+
+                            // Controlar separadores combinados como -=, +=, >=
+                            if (lenguaje.separadorCombinado.includes(caracterActual))
+                            {
+                                tokenActual += caracterActual;
+                                vienedeOperador = true;
+                            }
+                            else 
+                            {
+                                // Verificar si hay un token antes del separador, de ser asi agregarlo a la lista de tokens
+                                if (tokenActual.length > 0)
+                                {
+                                    token.texto = tokenActual;
+                                    token.fila = indiceDeLinea;
+    
+                                    tokensLineaActual.push(token);
+                                    
+                                    // asignar token previo el token que acabo de terminar de leer
+                                    tokenPrevio = token;
+    
+                                    // resetear varaibles
+                                    tokenActual = "";
+                                    token = new Token();
+                                }    
+
+                                // Agregar siempre el caracter actual como un token
+                                token.texto = caracterActual;
+                                token.fila = indiceDeLinea;
+
+                                tokensLineaActual.push(token);
+                                
+                                // asignar token previo el token que acabo de terminar de leer
+                                tokenPrevio = token;
+
+                                // resetear varaibles
+                                tokenActual = "";
+                                token = new Token();
+                                vienedeOperador = false;                         
+                            } 
+                            
+                            if (lenguaje.asignador.includes(tokenPrevio.texto))
+                            {
+                                tokenPrevio.esAsignador = true;
+                            }
                         }                        
                         else 
                         {
-                            tokenActual += caracterActual;
+                            // si lo que vania antes era un operador como +, -, = tenemos que guardarlo como token
+                            if (vienedeOperador)
+                            {
+                                token.texto = tokenActual;
+                                token.fila = indiceDeLinea;
+
+                                // evaluar el token para ver si es una asignacion
+                                if (lenguaje.asignador.includes(token.texto))
+                                {
+                                    token.esAsignador = true;
+                                }
+
+                                tokensLineaActual.push(token);
+                                
+                                // asignar token previo el token que acabo de terminar de leer
+                                tokenPrevio = token;
+
+                                // resetear varaibles
+                                tokenActual = "";
+                                estoyLeyendoString = false;
+                                token = new Token();
+                                vienedeOperador = false; 
+                            }
+
+                            // verificar si son caracteres de agrupacion
+                            if(caracterActual == lenguaje.abrirMetodo || caracterActual == lenguaje.cerrarMetodo 
+                                || caracterActual == lenguaje.abrirBloque || caracterActual == lenguaje.cerrarBloque)
+                            {
+                                // si hay un token antes de los caracters de agrupacion, meterlo a la lista
+                                if (tokenActual.length > 0)
+                                {
+                                    token.texto = tokenActual;
+                                    token.fila = indiceDeLinea;
+                                    
+                                    if (caracterActual == lenguaje.abrirMetodo)
+                                    {
+                                        token.esMetodo = true;  
+                                    }
+                                    else if (caracterActual == lenguaje.cerrarMetodo)
+                                    {
+                                        token.esArgumento = true;
+                                    }
+
+                                    tokensLineaActual.push(token);
+                                    
+                                    // asignar token previo el token que acabo de terminar de leer
+                                    tokenPrevio = token;
+    
+                                    // resetear varaibles
+                                    tokenActual = "";
+                                    token = new Token();
+                                }    
+
+                                // Agregar siempre el caracter actual como un token
+                                token.texto = caracterActual;
+                                token.fila = indiceDeLinea;
+
+                                tokensLineaActual.push(token);
+                                
+                                // asignar token previo el token que acabo de terminar de leer
+                                tokenPrevio = token;
+
+                                // resetear varaibles
+                                tokenActual = "";
+                                token = new Token();
+                                vienedeOperador = false;                     
+                            } 
+                            else
+                            {
+                                tokenActual += caracterActual;
+                                vienedeOperador = false;
+                            }
                         }
                     }
                 }
@@ -125,14 +323,43 @@
                 // Agregar el token al array si es el token final, ya que no hay ningun separador final
                 if (tokenActual.length > 0)
                 {
-                    tokensLineaActual.push(tokenActual);
-                    tokenActual = "";                    
+                    token.texto = tokenActual;
+                    token.fila = indiceDeLinea;
+
+                    // evaluar el token para ver si es una asignacion
+                    if (lenguaje.asignador.includes(token.texto))
+                    {
+                        token.esAsignador = true;
+                    }
+
+                    tokensLineaActual.push(token);
+                    
+                    // asignar token previo el token que acabo de terminar de leer
+                    tokenPrevio = token;
+
+                    // resetear varaibles
+                    tokenActual = "";
+                    estoyLeyendoString = false;
+                    token = new Token();
+                    vienedeOperador = false;                   
                 }
 
-                lineasProcesadas.push(tokensLineaActual);
+                let linea =
+                {
+                    validaSintacticas: false,
+                    texto: ProcesarTokens(tokensLineaActual, simbolos),
+                    tokens: tokensLineaActual
+                }
+                lineasProcesadas.push(linea);
             }
             console.log(lineasProcesadas);
             return lineasProcesadas;
+        }
+
+        // Funcion para clasificar tokens
+        function ProcesarTokens(tokens, simbolos)
+        {
+
         }
 
         function JoinTokens(tokens) {
@@ -221,44 +448,30 @@
     });
 
     class Token {
-        text = "";
-        isVariable = true;
-        isReserved = false;
-        isClass = false;
-        isProperty = false;
-        isArgument = false;
-        isMethod = false;
-        isAssign = false;
-        isOperator = false;
-        isLogical = false;
-        isSimbol = false;
-        isBool = false;
-        isString = false;
-        isUnknown = false;
-        isNumber = false;
-        value = "";
+        texto = "";
+        esVariable = true;
+        esReservado = false;
+        esClase = false;
+        esPropiedad = false;
+        esArgumento = false;
+        esMetodo = false;
+        esAsignador = false;
+        esOperador = false;
+        esLogico = false;
+        esSimbolo = false;
+        esBool = false;
+        esString = false;
+        esUnknown = false;
+        esNumero = false;
+        valor = "";
         fila = 0;
-        noConvert = false;
-        forceNumber = false;
+        noConvertir = false;
+        forzarNumero = false;
     }
+
     class Simbolo {
         nombre = "";
         linea = "";
         valor = "";
-    }
-    class Error {
-        linea = 0
-        posicion = 0;
-        error = "";
-        tipo = "";
-    }
-    class SimboloSemantico {
-        nombre = "";
-        linea = 0;
-        valor = "";
-        apariciones = [];
-        valido = true;
-        mensaje = "";
-        tipo = "";
     }
 })();
