@@ -39,6 +39,9 @@
 				</button>
 				<button class="btn btn-primary my-2" ng-click="controlador.CambioEnEditor();">
 					Léxico
+				</button>
+				<button class="btn btn-primary my-2" data-target="#exampleModal" data-toggle="modal">
+					Tabla de Símbolos
 				</button>			
 			</div>
 		</div>
@@ -66,12 +69,53 @@
 								<div class="card-body"  style="max-height: 260px !important; overflow: auto;">
 									<ul class="list-group list-group-flush px-1 py-1">
 										<li class="list-group-item px-1 py-1" ng-repeat="linea in controlador.tokens track by $index">
-											<span ng-repeat="token in linea track by $index">{{ token }}<span ng-if="!$last">,</span>
-											</span>											
+											<span>{{ linea.texto }}</span>											
 										</li>
 									</ul>
 								</div>
 							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- Modal -->
+			<div aria-hidden="true" aria-labelledby="exampleModalLabel" class="modal fade" id="exampleModal" role="dialog" tabindex="-1">
+				<div class="modal-dialog" role="document">
+					<div class="modal-content">
+						<div class="modal-header">
+							<h5 class="modal-title" id="exampleModalLabel">
+								Tabla De Símbolos
+							</h5>
+							<button aria-label="Cerrar" class="close" data-dismiss="modal" type="button">
+								<span aria-hidden="true">
+									×
+								</span>
+							</button>
+						</div>
+						<div class="modal-body">
+							<table class="table">
+								<thead>
+									<tr>
+										<th scope="col">Nombre</th>
+										<th scope="col">Línea</th>
+										<th scope="col">Tipo</th>
+										<th scope="col">Valor</th>
+									</tr>
+								</thead>
+								<tbody>                                      	
+									<tr ng-repeat="simbolo in controlador.simbolos track by $index">
+										<th scope="row">{{simbolo.nombre}}</th>
+										<td>{{simbolo.linea + 1}}</td>
+										<td>{{simbolo.tipo}}</td>
+										<td>{{simbolo.valor}}</td>
+									</tr>                                        
+								</tbody>
+							</table>
+						</div>
+						<div class="modal-footer">
+							<button class="btn btn-secondary" data-dismiss="modal" type="button">
+								Cerrar
+							</button>
 						</div>
 					</div>
 				</div>

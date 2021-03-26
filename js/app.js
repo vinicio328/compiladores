@@ -347,7 +347,7 @@
                 let linea =
                 {
                     validaSintacticas: false,
-                    texto: ProcesarTokens(tokensLineaActual, simbolos),
+                    texto: AnalisisLexico(tokensLineaActual, simbolos),
                     tokens: tokensLineaActual
                 }
                 lineasProcesadas.push(linea);
@@ -356,10 +356,98 @@
             return lineasProcesadas;
         }
 
-        // Funcion para clasificar tokens
-        function ProcesarTokens(tokens, simbolos)
+        // Funcion para clasificar tokens, o analizador lexico
+        function AnalisisLexico(tokens, simbolos) 
         {
+            var texto = "";
 
+            // ir token en token para clasificarlo
+            for (var i = 0; i < tokens.length; i++)
+            {
+                var token = tokens[i];
+                var tokenTexto = token.texto;
+
+                token.esVariable = false;
+
+                // palabra reservada 
+                if (lenguaje.reservadas.includes(tokenTexto))
+                {
+                    token.esReservado = true;
+                    texto += tokenTexto + '(reservada) ';
+                    continue;
+                }
+                // valor booleano
+                if (tokenTexto == 'true' || tokenTexto == 'false')
+                {
+                    token.esBool = true;
+                    texto += tokenTexto + '(booleano) ';
+                    continue;
+                }
+                // valor string 
+                if (token.esString)
+                {
+                    texto += tokenTexto + '(cadena) ';
+                    continue;
+                }
+                // evaluar si es numero 
+                if (!isNaN(tokenTexto)) 
+                {
+                    token.esNumber = true;
+                    texto += tokenTexto + '(numero) ';
+                    continue;
+                }        
+                // variable 
+                if (lenguaje.expresionVariable.test(tokenTexto)) 
+                {
+                    token.esVariable = true;
+                    if (token.esClass) 
+                    {
+                        texto += tokenTexto + "(objeto) ";
+                    } else if (token.esPropiedad) 
+                    {
+                        texto += tokenTexto + "(miembro) ";
+                    } else if (token.esArgumento) 
+                    {
+                        texto += tokenTexto + "(argumento) ";
+                    } else if (token.esMetodo) 
+                    {
+                        texto += tokenTexto + "(metodo) ";
+                    } else 
+                    {
+                        texto += tokenTexto + "(variable) ";
+                        var simbolo = new Simbolo();
+                        simbolo.nombre = tokenTexto;
+                        simbolo.linea = token.fila;
+                        simbolos.push(simbolo); // verificar si el simbolo no existe 
+                    }                    
+                    continue;
+                }
+                // si es un operador
+                if (lenguaje.operador.includes(tokenTexto)) {
+                    token.esOperador = true;
+                    texto += tokenTexto + "(operador) ";
+                    continue;
+                }
+                // si es un operador logico
+                if (lenguaje.logical.includes(tokenTexto)) {
+                    token.esOperador = true;
+                    token.esLogico = true;
+                    texto += tokenTexto + "(logico) ";
+                    continue;
+                }
+                // si es un caracter simbolo 
+                if (tokenTexto.length == 1) {
+                    token.esSimbolo = true;
+                    texto += tokenTexto + "(simbolo) ";
+                    continue;
+                }
+                
+                token.esUnknown = true;
+                texto += tokenTexto + "(desconocido) ";
+
+
+            }
+            return texto;
         }
 
         function JoinTokens(tokens) {
