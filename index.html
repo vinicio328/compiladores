@@ -16,6 +16,8 @@
 	</script>
 	<script src="js/language-service.js">
 	</script>
+	<script src="js/automata-service.js">
+	</script>
 	<script src="js/angular.ui.js">
 	</script>	
 	<!-- Code Mirror -->
@@ -39,9 +41,12 @@
 				</button>
 				<button class="btn btn-primary my-2" ng-click="controlador.CambioEnEditor();">
 					Léxico
-				</button>
+				</button>				
 				<button class="btn btn-primary my-2" data-target="#exampleModal" data-toggle="modal">
 					Tabla de Símbolos
+				</button>
+				<button class="btn btn-primary my-2" ng-click="controlador.AnalisisSintactico();">
+					Sintáctico
 				</button>			
 			</div>
 		</div>
@@ -78,6 +83,44 @@
 					</div>
 				</div>
 			</div>
+
+			<div class="row row-cols-2">
+				<div class="col">
+					<h5>Errores de Sintaxis</h5>
+					<div class="row" style="max-height: 320px !important; overflow: auto;">
+						<div class="col">
+							<div class="card">
+								<div class="card-body">
+									<div class="tableFixHead">
+										<table class="table">
+											<thead>
+												<tr>
+													<th></th>
+													<th scope="col">Línea</th>
+													<th scope="col">Tipo</th>
+													<th scope="col">Error</th>
+												</tr>
+											</thead>
+											<tbody>                                      	
+												<tr ng-repeat="error in controlador.erroresSintacticos track by $index">
+													<td>
+														<i class="fas fa-exclamation-circle text-danger">
+														</i>
+													</td>
+													<td>{{error.linea}}</td>
+													<td ng-bind-html="error.tipo"></td>
+													<td ng-bind-html="error.error"></td>
+												</tr>                                        
+											</tbody>
+										</table>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
 			<!-- Modal -->
 			<div aria-hidden="true" aria-labelledby="exampleModalLabel" class="modal fade" id="exampleModal" role="dialog" tabindex="-1">
 				<div class="modal-dialog" role="document">

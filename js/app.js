@@ -4,8 +4,8 @@
 
     // Controlador del editor
     angular.module('compiladores').controller('EditorController', EditorController);
-    EditorController.$inject = ['$scope', '$filter', 'lenguaje', 'fileReader'];
-    function EditorController($scope, $filter, lenguaje,fileReader) {
+    EditorController.$inject = ['$scope', '$filter', 'lenguaje', 'automata', 'fileReader'];
+    function EditorController($scope, $filter, lenguaje, automata, fileReader) {
         // vm controlador, en lugar de this, para evitar conflictos de scope 
         var vm = this;
         // declarar variables del controlador
@@ -15,6 +15,7 @@
         vm.codigo = ""; // codigo pegado en el text-area
         vm.erroresSintacticos = [];
         vm.datosSemanticos = [];
+        vm.AnalisisSintactico = AnalisisSintactico;
         vm.CambioEnEditor = function CambioEnEditor() {
 
             vm.simbolos = [];
@@ -392,7 +393,7 @@
                 // evaluar si es numero 
                 if (!isNaN(tokenTexto)) 
                 {
-                    token.esNumber = true;
+                    token.esNumero = true;
                     texto += tokenTexto + '(numero) ';
                     continue;
                 }        
@@ -449,6 +450,90 @@
             }
             return texto;
         }
+
+        // Funcion para evaluar si las cadenas cumplen con la sintaxis
+        // Analisis simple, declaracion unica lineal, no valida multiples lineas
+        // sintaxis validada: 
+        // - declaracion y asignacion de variable
+        // - if / else 
+        // - for
+        // - while
+        function AnalisisSintactico()
+        {
+            vm.erroresSintacticos = [];
+            vm.tokens.forEach(function(linea, lineaIndex) {
+                let cadenaTokens = [];
+                if (linea.tokens.length > 0) {
+                    let primerToken = linea.tokens[0];
+                    let ultimoToken = linea.tokens[linea.tokens.length - 1];
+                    // evaluar primer token para saber que analsis hay que hacer
+                    // asignacion de variable
+                    if (lenguaje.variable.includes(primerToken.texto) || primerToken.isVariable) {
+                        // encontrar fin de linea
+                        cadenaTokens.push(primerToken);
+                        linea.tokens.forEach(function(token, index) {
+                            if (index == 0) {
+                                return true;
+                            } // continue
+                            cadenaTokens.push(token); // Agregar todos los tokens de la misma linea para evaluarlos
+                        });
+
+                        let esValido = automata.validarAsigancion(cadenaTokens);
+                        linea.validaSintactica = esValido;
+                        
+                        if (!esValido)
+                        {
+                            let error = new Error();
+                            error.tipo = primerToken.texto;
+                            error.linea = lineaIndex + 1;
+                            error.error = "Mala asignación de variable";
+                            vm.erroresSintacticos.push(error);
+                        }
+                        return true;
+                    }
+
+                    // estructuras de control 
+                    if (lenguaje.reservadas.includes(primerToken.texto))
+                    {
+                        // if
+                        if (primerToken.texto == "if")
+                        {
+                            primerToken.noConvertir = true;
+                            cadenaTokens.push(primerToken);
+                            
+                            linea.tokens.forEach(function(token, index) {
+                                if (index == 0) {
+                                    return true;
+                                } 
+                                if (lenguaje.if.includes(token.texto)) {
+                                    token.noConvertir = true;
+                                    cadenaTokens.push(token);
+                                } else {
+                                    cadenaTokens.push(token);
+                                }
+                            });
+
+                            let esValido = automata.validarIf(cadenaTokens);
+                            linea.validaSintactica = esValido;
+                            
+                            if (!esValido)
+                            {
+                                let error = new Error();
+                                error.tipo = primerToken.texto;
+                                error.linea = lineaIndex + 1;
+                                error.error = "Mala construcción del if";
+                                vm.erroresSintacticos.push(error);
+                            }
+                            return true;
+
+
+                        }
+                    }
+
+                }
+            });
+        }
+        
 
         function JoinTokens(tokens) {
             let text = "";
@@ -555,6 +640,7 @@
         fila = 0;
         noConvertir = false;
         forzarNumero = false;
+        forzarBool = false;
     }
 
     class Simbolo {
